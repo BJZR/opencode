@@ -52,13 +52,25 @@ function notFound() {
   return HttpServerResponse.jsonUnsafe({ error: "Not Found" }, { status: 404 })
 }
 
+// Hashed build assets (vite appends a content hash) are safe to cache forever.
+const hashedAsset = (file: string) => /-[A-Za-z0-9_-]{8,}\.[a-z0-9]+$/i.test(file)
+
 function embeddedUIResponse(file: string, body: Uint8Array) {
   const mime = FSUtil.mimeType(file)
   const headers = new Headers({ "content-type": mime })
   if (mime.startsWith("text/html")) {
     headers.set("content-security-policy", cspForHtml(new TextDecoder().decode(body)))
+    // index.html must revalidate on every load: each build swaps the asset
+    // hashes it references, and a stale copy points at assets that no longer
+    // exist in the binary.
+    headers.set("cache-control", "no-cache")
+  } else if (hashedAsset(file)) {
+    headers.set("cache-control", "public, max-age=31536000, immutable")
   }
-  return HttpServerResponse.raw(body, { headers })
+  // uint8Array (not raw) so the body carries content-length and is eligible
+  // for the compression middleware: chunked, uncompressed 2.7MB responses
+  // fail to load in some browsers/network paths.
+  return HttpServerResponse.uint8Array(body, { headers })
 }
 
 export function serveEmbeddedUIEffect(
@@ -66,7 +78,12 @@ export function serveEmbeddedUIEffect(
   fs: FSUtil.Interface,
   embeddedWebUI: Record<string, string>,
 ) {
-  const file = embeddedWebUI[requestPath.replace(/^\//, "")] ?? embeddedWebUI["index.html"] ?? null
+  const key = requestPath.replace(/^\//, "")
+  // The SPA fallback only applies to app routes. Missing files (e.g. an asset
+  // hash referenced by a stale cached index.html) must 404 instead of serving
+  // index.html with a 200, which the browser cannot parse as a module.
+  const isFile = (key.split("/").pop() ?? "").includes(".")
+  const file = embeddedWebUI[key] ?? (isFile ? null : (embeddedWebUI["index.html"] ?? null))
   if (!file) return Effect.succeed(notFound())
 
   return fs.readFile(file).pipe(
