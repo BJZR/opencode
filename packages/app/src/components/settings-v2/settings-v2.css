@@ -178,13 +178,46 @@
   background-color: var(--v2-background-bg-layer-01);
 }
 
-@media (max-width: 639px) {
-  .settings-v2[data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
-    [data-slot="tabs-v2-list"] {
-    width: 144px;
-    min-width: 144px;
-    padding-inline: 8px;
-  }
+.settings-v2-nav {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+
+.settings-v2-nav-close {
+  display: none;
+}
+
+.settings-v2-nav-divider {
+  display: none;
+  width: 20px;
+  height: 1px;
+  margin-block: 4px;
+  flex-shrink: 0;
+  background-color: var(--v2-border-border-base);
+}
+
+.settings-v2-nav-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.settings-v2-nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.settings-v2-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
 }
 
 .settings-v2-nav-footer {
@@ -200,6 +233,78 @@
   font-weight: 440;
   line-height: 1;
   color: var(--v2-text-text-faint);
+}
+
+@media (max-width: 767px) {
+  .settings-v2[data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
+    [data-slot="tabs-v2-list"] {
+    width: 48px;
+    min-width: 48px;
+    padding: 8px;
+  }
+
+  .settings-v2[data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
+    [data-slot="tabs-v2-trigger-wrapper"] {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .settings-v2[data-component="tabs-v2"][data-variant="settings"][data-orientation="vertical"]
+    [data-slot="tabs-v2-trigger"] {
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+
+  .settings-v2-nav {
+    align-items: center;
+    gap: 4px;
+  }
+
+  .settings-v2-nav-close {
+    display: inline-flex;
+    margin-bottom: 4px;
+  }
+
+  .settings-v2-nav-sections {
+    align-items: center;
+    gap: 4px;
+    width: auto;
+  }
+
+  .settings-v2-nav-section {
+    align-items: center;
+    gap: 4px;
+    width: auto;
+  }
+
+  .settings-v2-nav-group {
+    align-items: center;
+    gap: 4px;
+    width: auto;
+  }
+
+  .settings-v2-nav [data-slot="tabs-v2-section-title"] {
+    display: none;
+  }
+
+  .settings-v2-nav-label {
+    display: none;
+  }
+
+  .settings-v2-nav-divider {
+    display: block;
+  }
+
+  .settings-v2-nav-footer {
+    display: none;
+  }
+
+  .settings-v2-nav [data-component="tooltip-v2-trigger"] {
+    display: flex;
+    flex-shrink: 0;
+  }
 }
 
 .settings-v2-legacy-panel {

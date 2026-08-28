@@ -1,7 +1,10 @@
 import { Component, createMemo, createSignal, startTransition } from "solid-js"
+import { createMediaQuery } from "@solid-primitives/media"
 import { Dialog } from "@opencode-ai/ui/v2/dialog-v2"
 import { TabsV2 } from "@opencode-ai/ui/v2/tabs-v2"
 import { Icon } from "@opencode-ai/ui/icon"
+import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
+import { TooltipV2 } from "@opencode-ai/ui/v2/tooltip-v2"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
 import { SettingsGeneralV2 } from "./general"
@@ -25,6 +28,7 @@ export const DialogSettings: Component<{
   const layout = useLayout()
   const tabs = useTabs()
   const serverSync = useServerSync()
+  const mobile = createMediaQuery("(max-width: 767px)")
   const [tab, setTab] = createSignal(props.defaultValue ?? "general")
   const directory = createMemo(() => {
     const route = layout.route()
@@ -51,39 +55,58 @@ export const DialogSettings: Component<{
         class="settings-v2"
       >
         <TabsV2.List>
-          <div class="flex flex-col justify-between h-full w-full">
-            <div class="flex flex-col gap-3 w-full">
-              <div class="flex flex-col gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <TabsV2.SectionTitle>{language.t("settings.section.desktop")}</TabsV2.SectionTitle>
-                  <div class="flex flex-col gap-1.5 w-full">
-                    <TabsV2.Trigger value="general">
+          <div class="settings-v2-nav">
+            <TooltipV2 placement="right" value={language.t("common.close")} inactive={!mobile()}>
+              <IconButtonV2
+                type="button"
+                variant="ghost-muted"
+                size="large"
+                class="settings-v2-nav-close"
+                icon={<Icon name="close" />}
+                aria-label={language.t("common.close")}
+                onClick={() => dialog.close()}
+              />
+            </TooltipV2>
+            <div class="settings-v2-nav-sections">
+              <div class="settings-v2-nav-section">
+                <TabsV2.SectionTitle>{language.t("settings.section.desktop")}</TabsV2.SectionTitle>
+                <div class="settings-v2-nav-group">
+                  <TooltipV2 placement="right" value={language.t("settings.tab.general")} inactive={!mobile()}>
+                    <TabsV2.Trigger value="general" aria-label={language.t("settings.tab.general")}>
                       <Icon name="sliders" />
-                      {language.t("settings.tab.general")}
+                      <span class="settings-v2-nav-label">{language.t("settings.tab.general")}</span>
                     </TabsV2.Trigger>
-                    <TabsV2.Trigger value="shortcuts">
+                  </TooltipV2>
+                  <TooltipV2 placement="right" value={language.t("settings.tab.shortcuts")} inactive={!mobile()}>
+                    <TabsV2.Trigger value="shortcuts" aria-label={language.t("settings.tab.shortcuts")}>
                       <Icon name="keyboard" />
-                      {language.t("settings.tab.shortcuts")}
+                      <span class="settings-v2-nav-label">{language.t("settings.tab.shortcuts")}</span>
                     </TabsV2.Trigger>
-                  </div>
+                  </TooltipV2>
                 </div>
-
-                <div class="flex flex-col gap-1.5">
-                  <TabsV2.SectionTitle>{language.t("settings.section.server")}</TabsV2.SectionTitle>
-                  <div class="flex flex-col gap-1.5 w-full">
-                    <TabsV2.Trigger value="servers">
+              </div>
+              <div class="settings-v2-nav-divider" aria-hidden="true" />
+              <div class="settings-v2-nav-section">
+                <TabsV2.SectionTitle>{language.t("settings.section.server")}</TabsV2.SectionTitle>
+                <div class="settings-v2-nav-group">
+                  <TooltipV2 placement="right" value={language.t("status.popover.tab.servers")} inactive={!mobile()}>
+                    <TabsV2.Trigger value="servers" aria-label={language.t("status.popover.tab.servers")}>
                       <Icon name="server" />
-                      {language.t("status.popover.tab.servers")}
+                      <span class="settings-v2-nav-label">{language.t("status.popover.tab.servers")}</span>
                     </TabsV2.Trigger>
-                    <TabsV2.Trigger value="providers">
+                  </TooltipV2>
+                  <TooltipV2 placement="right" value={language.t("settings.providers.title")} inactive={!mobile()}>
+                    <TabsV2.Trigger value="providers" aria-label={language.t("settings.providers.title")}>
                       <Icon name="providers" />
-                      {language.t("settings.providers.title")}
+                      <span class="settings-v2-nav-label">{language.t("settings.providers.title")}</span>
                     </TabsV2.Trigger>
-                    <TabsV2.Trigger value="models">
+                  </TooltipV2>
+                  <TooltipV2 placement="right" value={language.t("settings.models.title")} inactive={!mobile()}>
+                    <TabsV2.Trigger value="models" aria-label={language.t("settings.models.title")}>
                       <Icon name="models" />
-                      {language.t("settings.models.title")}
+                      <span class="settings-v2-nav-label">{language.t("settings.models.title")}</span>
                     </TabsV2.Trigger>
-                  </div>
+                  </TooltipV2>
                 </div>
               </div>
             </div>
