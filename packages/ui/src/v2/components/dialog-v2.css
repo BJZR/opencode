@@ -174,4 +174,14 @@
     width: min(calc(100vw - 32px), 980px);
     height: min(calc(100vh - 92px), 600px);
   }
+
+  /* Phone: the settings dialog takes the whole viewport. */
+  @media (max-width: 767px) {
+    &[data-variant="settings"] [data-slot="dialog-container"] {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      border-radius: 0;
+    }
+  }
 }
