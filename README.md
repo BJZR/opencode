@@ -45,18 +45,47 @@
 
 ### Installation
 
-```bash
-# YOLO
-curl -fsSL https://opencode.ai/install | bash
+#### Universal One-Liner (Recommended)
 
-# Package managers
-npm i -g opencode-ai@latest        # or bun/pnpm/yarn
+Fast, optimized, and zero-dependency universal installation for Linux, macOS, FreeBSD, and Windows (WSL/Git Bash):
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+```
+
+To install a specific version or skip shell path modifications:
+
+```bash
+curl -fsSL https://opencode.ai/install | bash -s -- --version 1.0.180
+curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+```
+
+#### Custom Installation Directory
+
+The installer automatically selects the optimal installation path using the following priority order:
+
+1. `$OPENCODE_INSTALL_DIR` - Custom installation directory
+2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path
+3. `$HOME/bin` - Standard user binary directory (if present or writable)
+4. `$HOME/.local/bin` - Standard local binary directory (if present)
+5. `$HOME/.opencode/bin` - Default fallback directory
+
+```bash
+# Examples
+OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/install | bash
+XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/install | bash
+```
+
+#### Package Managers
+
+```bash
+npm i -g opencode-ai@latest        # or bun / pnpm / yarn
 scoop install opencode             # Windows
 choco install opencode             # Windows
 brew install anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
-brew install opencode              # macOS and Linux (official brew formula, updated less)
+brew install opencode              # macOS and Linux (official brew formula)
 sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-bin               # Arch Linux (Latest from AUR)
+paru -S opencode-bin               # Arch Linux (AUR)
 mise use -g opencode               # Any OS
 nix run nixpkgs#opencode           # or github:anomalyco/opencode for latest dev branch
 ```
