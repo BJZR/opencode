@@ -136,7 +136,9 @@ try {
   })
 
   const { userPrompt, promptFiles } = await getUserPrompt()
-  await configureGit(accessToken)
+  if (!normalizeUseGithubToken()) {
+    await configureGit(accessToken)
+  }
   await assertPermissions()
 
   const comment = await createComment()
@@ -223,8 +225,10 @@ try {
   //core.setOutput("prepare_error", e.message);
 } finally {
   server.close()
-  await restoreGitConfig()
-  await revokeAppToken()
+  if (!normalizeUseGithubToken()) {
+    await restoreGitConfig()
+    await revokeAppToken()
+  }
 }
 process.exit(exitCode)
 
@@ -242,10 +246,15 @@ function createOpencode() {
 }
 
 function assertPayloadKeyword() {
+  if (process.env["PROMPT"]) return
   const payload = useContext().payload as IssueCommentEvent | PullRequestReviewCommentEvent
-  const body = payload.comment.body.trim()
-  if (!body.match(/(?:^|\s)(?:\/opencode|\/oc)(?=$|\s)/)) {
-    throw new Error("Comments must mention `/opencode` or `/oc`")
+  const body = payload.comment.body.trim().toLowerCase()
+  const mentions = (process.env["MENTIONS"] || "/opencode,/oc")
+    .split(",")
+    .map((m) => m.trim().toLowerCase())
+    .filter(Boolean)
+  if (!mentions.some((m) => body === m || body.includes(m))) {
+    throw new Error(`Comments must mention ${mentions.map((m) => "`" + m + "`").join(" or ")}`)
   }
 }
 
@@ -342,6 +351,24 @@ function useEnvGithubToken() {
   return process.env["TOKEN"]
 }
 
+function useEnvVariant() {
+  return process.env["VARIANT"] || undefined
+}
+
+function normalizeUseGithubToken() {
+  const value = process.env["USE_GITHUB_TOKEN"]
+  if (!value) return false
+  if (value === "true") return true
+  if (value === "false") return false
+  throw new Error(`Invalid use_github_token value: ${value}. Must be a boolean.`)
+}
+
+function normalizeOidcBaseUrl(): string {
+  const value = process.env["OIDC_BASE_URL"]
+  if (!value) return "https://api.opencode.ai"
+  return value.replace(/\/+$/, "")
+}
+
 function isMock() {
   const { mockEvent, mockToken } = useEnvMock()
   return Boolean(mockEvent || mockToken)
@@ -369,12 +396,23 @@ function useShareUrl() {
 async function getAccessToken() {
   const { repo } = useContext()
 
+  if (normalizeUseGithubToken()) {
+    const githubToken = process.env["GITHUB_TOKEN"] || process.env["TOKEN"]
+    if (!githubToken) {
+      throw new Error(
+        "GITHUB_TOKEN environment variable is not set. When using use_github_token, you must provide GITHUB_TOKEN.",
+      )
+    }
+    return githubToken
+  }
+
   const envToken = useEnvGithubToken()
   if (envToken) return envToken
 
+  const oidcBaseUrl = normalizeOidcBaseUrl()
   let response
   if (isMock()) {
-    response = await fetch("https://api.opencode.ai/exchange_github_app_token_with_pat", {
+    response = await fetch(`${oidcBaseUrl}/exchange_github_app_token_with_pat`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${useEnvMock().mockToken}`,
@@ -383,7 +421,7 @@ async function getAccessToken() {
     })
   } else {
     const oidcToken = await core.getIDToken("opencode-github-action")
-    response = await fetch("https://api.opencode.ai/exchange_github_app_token", {
+    response = await fetch(`${oidcBaseUrl}/exchange_github_app_token`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${oidcToken}`,
@@ -412,25 +450,36 @@ async function createComment() {
 }
 
 async function getUserPrompt() {
+  const customPrompt = process.env["PROMPT"]
+  if (customPrompt) {
+    return { userPrompt: customPrompt, promptFiles: [] }
+  }
+
   const context = useContext()
   const payload = context.payload as IssueCommentEvent | PullRequestReviewCommentEvent
   const reviewContext = getReviewCommentContext()
 
+  const mentions = (process.env["MENTIONS"] || "/opencode,/oc")
+    .split(",")
+    .map((m) => m.trim().toLowerCase())
+    .filter(Boolean)
+
   let prompt = (() => {
     const body = payload.comment.body.trim()
-    if (body === "/opencode" || body === "/oc") {
+    const bodyLower = body.toLowerCase()
+    if (mentions.some((m) => bodyLower === m)) {
       if (reviewContext) {
         return `Review this code change and suggest improvements for the commented lines:\n\nFile: ${reviewContext.file}\nLines: ${reviewContext.line}\n\n${reviewContext.diffHunk}`
       }
       return "Summarize this thread"
     }
-    if (body.includes("/opencode") || body.includes("/oc")) {
+    if (mentions.some((m) => bodyLower.includes(m))) {
       if (reviewContext) {
         return `${body}\n\nContext: You are reviewing a comment on file "${reviewContext.file}" at line ${reviewContext.line}.\n\nDiff context:\n${reviewContext.diffHunk}`
       }
       return body
     }
-    throw new Error("Comments must mention `/opencode` or `/oc`")
+    throw new Error(`Comments must mention ${mentions.map((m) => "`" + m + "`").join(" or ")}`)
   })()
 
   // Handle images
@@ -577,9 +626,6 @@ async function summarize(response: string) {
   try {
     return await chat(`Summarize the following in less than 40 characters:\n\n${response}`)
   } catch {
-    if (isScheduleEvent()) {
-      return "Scheduled task changes"
-    }
     const payload = useContext().payload as IssueCommentEvent
     return `Fix issue: ${payload.issue.title}`
   }
@@ -590,8 +636,8 @@ async function resolveAgent(): Promise<string | undefined> {
   if (!envAgent) return undefined
 
   // Validate the agent exists and is a primary agent
-  const agents = await client.agent.list<true>()
-  const agent = agents.data?.find((a) => a.name === envAgent)
+  const agents = await client.app.agents<true>()
+  const agent = agents.data?.find((a: { name: string; mode?: string }) => a.name === envAgent)
 
   if (!agent) {
     console.warn(`agent "${envAgent}" not found. Falling back to default agent`)
@@ -610,6 +656,7 @@ async function chat(text: string, files: PromptFiles = []) {
   console.log("Sending message to opencode...")
   const { providerID, modelID } = useEnvModel()
   const agent = await resolveAgent()
+  const variant = useEnvVariant()
 
   const chat = await client.session.chat<true>({
     path: session,
@@ -617,6 +664,7 @@ async function chat(text: string, files: PromptFiles = []) {
       providerID,
       modelID,
       agent,
+      variant,
       parts: [
         {
           type: "text",
@@ -651,8 +699,8 @@ async function chat(text: string, files: PromptFiles = []) {
 }
 
 async function configureGit(appToken: string) {
-  // Do not change git config when running locally
-  if (isMock()) return
+  // Do not change git config when running locally or using GITHUB_TOKEN directly
+  if (isMock() || normalizeUseGithubToken()) return
 
   console.log("Configuring git...")
   const config = "http.https://github.com/.extraheader"
@@ -1058,7 +1106,7 @@ function buildPromptDataForPR(pr: GitHubPullRequest) {
 }
 
 async function revokeAppToken() {
-  if (!accessToken) return
+  if (!accessToken || normalizeUseGithubToken()) return
   console.log("Revoking app token...")
 
   await fetch("https://api.github.com/installation/token", {

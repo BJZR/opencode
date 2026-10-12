@@ -232,6 +232,7 @@ export const githubInstall = Effect.fn("Cli.github.install")(function* () {
           anthropic: 1,
           openai: 2,
           google: 3,
+          vercel: 4,
         }
         let provider = await prompts.select({
           message: "Select provider",
