@@ -109,6 +109,21 @@ Or you can set it up manually.
 
   `id-token: write` is not required in this mode because OIDC exchange is skipped. To use a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) or another GitHub App token, store it as a secret and pass that secret as `GITHUB_TOKEN` instead.
 
+### Using Vercel AI Gateway
+
+To run OpenCode via Vercel AI Gateway, provide `VERCEL_API_KEY` in `env` and set `model` to `vercel/<provider>/<model>`:
+
+```yaml
+steps:
+  - uses: anomalyco/opencode/github@latest
+    env:
+      VERCEL_API_KEY: ${{ secrets.VERCEL_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      model: vercel/anthropic/claude-sonnet-4
+      use_github_token: true
+```
+
 ---
 
 ## Supported Events

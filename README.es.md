@@ -45,19 +45,48 @@
 
 ### Instalación
 
-```bash
-# YOLO
-curl -fsSL https://opencode.ai/install | bash
+#### Instalación Universal en un comando (Recomendado)
 
-# Gestores de paquetes
-npm i -g opencode-ai@latest        # o bun/pnpm/yarn
+Instalación universal optimizada y ultrarrápida sin dependencias previas para Linux, macOS, FreeBSD y Windows (WSL/Git Bash):
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+```
+
+Para instalar una versión específica o deshabilitar la modificación de rutas del shell:
+
+```bash
+curl -fsSL https://opencode.ai/install | bash -s -- --version 1.0.180
+curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+```
+
+#### Directorio de Instalación Personalizado
+
+El instalador selecciona automáticamente la ruta de instalación según el siguiente orden de prioridad:
+
+1. `$OPENCODE_INSTALL_DIR` - Directorio de instalación personalizado
+2. `$XDG_BIN_DIR` - Ruta compatible con la especificación XDG Base Directory
+3. `$HOME/bin` - Directorio binario estándar del usuario (si existe o es escribible)
+4. `$HOME/.local/bin` - Directorio binario local estándar (si existe)
+5. `$HOME/.opencode/bin` - Directorio de respaldo por defecto
+
+```bash
+# Ejemplos
+OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/install | bash
+XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/install | bash
+```
+
+#### Gestores de Paquetes
+
+```bash
+npm i -g opencode-ai@latest        # o bun / pnpm / yarn
 scoop install opencode             # Windows
 choco install opencode             # Windows
 brew install anomalyco/tap/opencode # macOS y Linux (recomendado, siempre al día)
-brew install opencode              # macOS y Linux (fórmula oficial de brew, se actualiza menos)
+brew install opencode              # macOS y Linux (fórmula oficial de brew)
 sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-bin               # Arch Linux (Latest from AUR)
-mise use -g opencode               # cualquier sistema
+paru -S opencode-bin               # Arch Linux (AUR)
+mise use -g opencode               # Cualquier sistema
 nix run nixpkgs#opencode           # o github:anomalyco/opencode para la rama dev más reciente
 ```
 

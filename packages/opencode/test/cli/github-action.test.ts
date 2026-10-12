@@ -1,6 +1,7 @@
 import { test, expect, describe } from "bun:test"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { extractResponseText, formatPromptTooLargeError } from "../../src/cli/cmd/github"
+import { Provider } from "../../src/provider/provider"
 import type { MessageV2 } from "../../src/session/message-v2"
 import { SessionID, MessageID, PartID } from "../../src/session/schema"
 
@@ -195,5 +196,31 @@ describe("formatPromptTooLargeError", () => {
     expect(result).toInclude("img1.png (3 KB)")
     expect(result).toInclude("img2.jpg (6 KB)")
     expect(result).toInclude("img3.gif (9 KB)")
+  })
+})
+
+describe("Provider.parseModel for Vercel and standard providers", () => {
+  test("parses vercel model identifier with nested provider model path", () => {
+    const result = Provider.parseModel("vercel/anthropic/claude-sonnet-4")
+    expect(result).toEqual({
+      providerID: "vercel" as any,
+      modelID: "anthropic/claude-sonnet-4" as any,
+    })
+  })
+
+  test("parses vercel model identifier for openai model", () => {
+    const result = Provider.parseModel("vercel/openai/gpt-4o")
+    expect(result).toEqual({
+      providerID: "vercel" as any,
+      modelID: "openai/gpt-4o" as any,
+    })
+  })
+
+  test("parses standard provider model string", () => {
+    const result = Provider.parseModel("anthropic/claude-3-5-sonnet")
+    expect(result).toEqual({
+      providerID: "anthropic" as any,
+      modelID: "claude-3-5-sonnet" as any,
+    })
   })
 })
