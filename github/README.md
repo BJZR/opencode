@@ -97,6 +97,19 @@ This will walk you through installing the GitHub app, creating the workflow, and
              use_github_token: true
    ```
 
+   To use **Vercel AI Gateway**, set `VERCEL_API_KEY` and specify `model: vercel/<provider>/<model>`:
+
+   ```yml
+   - name: Run opencode with Vercel AI Gateway
+     uses: anomalyco/opencode/github@latest
+     env:
+       VERCEL_API_KEY: ${{ secrets.VERCEL_API_KEY }}
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     with:
+       model: vercel/anthropic/claude-sonnet-4
+       use_github_token: true
+   ```
+
 3. Store the API keys in secrets. In your organization or project **settings**, expand **Secrets and variables** on the left and select **Actions**. Add the required API keys.
 
 ## Support
